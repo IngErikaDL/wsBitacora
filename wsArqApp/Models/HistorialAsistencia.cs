@@ -4,7 +4,7 @@ namespace wsArqApp.Models
     public class HistorialAsistencia
     {
         public int Id { get; set; }
-        public string IdEmpleado { get; set; }
+        public int IdEmpleado { get; set; }
         public int NoSemana { get; set; }
         public bool Lun { get; set; }
         public bool Mar { get; set; }

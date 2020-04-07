@@ -9,5 +9,6 @@ namespace wsArqApp.Models
         public string NombreUsuario { get; set; }
         public string Correo { get; set; }
         public bool Login { get; set; }
+        public string Exception { get; set; }
     }
 }

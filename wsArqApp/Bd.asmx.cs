@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Web.Services;
 using wsArqApp.Models;
+using wsArqApp.Models.Respuestas;
 
 namespace wsArqApp
 {
@@ -11,13 +12,19 @@ namespace wsArqApp
     [System.ComponentModel.ToolboxItem(false)]
     public class Bd : WebService
     {
+        public Bd()
+        {
+
+        }
+
         #region Conexion
 
         private MySqlConnection SqlConnection { get; set; }
 
         private void CrearConexionSql()
         {
-            string connString = "server=198.71.225.51;port=3306;userid=rentec;password=r3nt3n2019;database=rentec;";
+            // string connString = "server=198.71.225.51;port=3306;userid=rentec;password=r3nt3n2019;database=rentec;";
+            string connString = "server=198.71.225.51;port=3306;userid=dev;password=r3nt3n2019;database=bitacoraApp_dev;";
             SqlConnection = new MySqlConnection(connString);
         }
 
@@ -44,7 +51,15 @@ namespace wsArqApp
             {
                 CrearConexionSql();
                 AbrirConexion();
-                string query = "SELECT * " +
+                string query = "SELECT IdEmpleado" +
+                                "       ,Nombre" +
+                                "       ,Apellido" +
+                                "       ,Categoria" +
+                                "       ,Imss" +
+                                "       ,SueldoSemanal" +
+                                "       ,Baja" +
+                                "       ,MotivoBaja" +
+                                "       ,FechaIngreso " +
                                 "FROM Empleado ";
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
@@ -54,16 +69,15 @@ namespace wsArqApp
                 {
                     var empleado = new Empleado
                     {
-                        Id = reader.GetInt32(0),
-                        IdEmpleado = reader.GetString(1),
-                        Nombre = reader.GetString(2),
-                        Apellido = reader.GetString(3),
-                        Categoria = reader.GetString(4),
-                        Imss = reader.GetString(5),
-                        SueldoSemanal = reader.GetDecimal(6),
-                        Baja = reader.GetBoolean(7),
-                        MotivoBaja = reader.GetString(8),
-                        FechaIngreso = reader.GetString(9)
+                        IdEmpleado = reader.GetInt32(0),
+                        Nombre = reader.GetString(1),
+                        Apellido = reader.GetString(2),
+                        Categoria = reader.GetString(3),
+                        Imss = reader.GetString(4),
+                        SueldoSemanal = reader.GetDecimal(5),
+                        Baja = reader.GetBoolean(6),
+                        MotivoBaja = reader.GetString(7),
+                        FechaIngreso = reader.GetString(8)
                     };
 
                     listaEmpleados.Add(empleado);
@@ -80,24 +94,132 @@ namespace wsArqApp
         }
 
         [WebMethod]
-        public bool GuardarEmpleado(Empleado empleado)
+        public RespuestaConsultarEmpleados ConsultarListaEmpleados()
         {
+            var respuesta = new RespuestaConsultarEmpleados();
             try
             {
                 CrearConexionSql();
                 AbrirConexion();
-                var result = false;
+                string query = "SELECT IdEmpleado" +
+                                "       ,Nombre" +
+                                "       ,Apellido" +
+                                "       ,Categoria" +
+                                "       ,Imss" +
+                                "       ,SueldoSemanal" +
+                                "       ,Baja" +
+                                "       ,MotivoBaja" +
+                                "       ,FechaIngreso " +
+                                "FROM Empleado ";
+                MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+                List<Empleado> listaEmpleados = new List<Empleado>();
+
+                while (reader.Read())
+                {
+                    var empleado = new Empleado
+                    {
+                        IdEmpleado = reader.GetInt32(0),
+                        Nombre = reader.GetString(1),
+                        Apellido = reader.GetString(2),
+                        Categoria = reader.GetString(3),
+                        Imss = reader.GetString(4),
+                        SueldoSemanal = reader.GetDecimal(5),
+                        Baja = reader.GetBoolean(6),
+                        MotivoBaja = reader.GetString(7),
+                        FechaIngreso = reader.GetString(8)
+                    };
+
+                    listaEmpleados.Add(empleado);
+                }
+                respuesta.ListaEmpleados = listaEmpleados;
+                respuesta.CodRechazo = 0;
+                respuesta.MsgRechazo = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                respuesta.ListaEmpleados = null;
+                respuesta.CodRechazo = 99;
+                respuesta.MsgRechazo = ex.Message + "|" + ex.InnerException;
+            }
+            CerrarConexion();
+            return respuesta;
+        }
+
+        [WebMethod]
+        public RespuestaGuardarEmpleado ConsultarEmpleadoxId()
+        {
+            var respuesta = new RespuestaGuardarEmpleado();
+            try
+            {
+                string query = "SELECT IdEmpleado" +
+                                "       ,Nombre" +
+                                "       ,Apellido" +
+                                "       ,Categoria" +
+                                "       ,Imss" +
+                                "       ,SueldoSemanal" +
+                                "       ,Baja" +
+                                "       ,MotivoBaja" +
+                                "       ,FechaIngreso " +
+                                "FROM Empleado " +
+                                "WHERE IdEmpleado = (SELECT MAX(IdEmpleado) FROM Empleado)";
+                MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+                List<Empleado> listaEmpleados = new List<Empleado>();
+
+                while (reader.Read())
+                {
+                    var empleado = new Empleado
+                    {
+                        IdEmpleado = reader.GetInt32(0),
+                        Nombre = reader.GetString(1),
+                        Apellido = reader.GetString(2),
+                        Categoria = reader.GetString(3),
+                        Imss = reader.GetString(4),
+                        SueldoSemanal = reader.GetDecimal(5),
+                        Baja = reader.GetBoolean(6),
+                        MotivoBaja = reader.GetString(7),
+                        FechaIngreso = reader.GetString(8)
+                    };
+                    respuesta.Empleado = empleado;
+                }
+
+                respuesta.Respuesta.CodRechazo = 0;
+                respuesta.Respuesta.MsgRechazo = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                respuesta.Empleado = null;
+                respuesta.Respuesta.CodRechazo = 99;
+                respuesta.Respuesta.MsgRechazo = "ConsultarEmpleadoxId " + ex.Message + "|" + ex.InnerException;
+            }
+
+            return respuesta;
+        }
+
+        [WebMethod]
+        public RespuestaGuardarEmpleado GuardarEmpleado(Empleado empleado)
+        {
+            var respuesta = new RespuestaGuardarEmpleado
+            {
+                Respuesta = new RespuestaBase(),
+                Empleado = new Empleado()
+            };
+            try
+            {
+                CrearConexionSql();
+                AbrirConexion();
 
                 MySqlCommand cmd = new MySqlCommand
                 {
                     Connection = SqlConnection,
                     CommandText = "INSERT INTO Empleado " +
-                                    "(IdEmpleado, Nombre, Apellido, Categoria, " +
+                                    "(Nombre, Apellido, Categoria, " +
                                     "Imss, SueldoSemanal, Baja, MotivoBaja, FechaIngreso) " +
-                                    "VALUES (@IdEmpleado, @Nombre, @Apellido, @Categoria, @Imss, " +
+                                    "VALUES (@Nombre, @Apellido, @Categoria, @Imss, " +
                                     "@SueldoSemanal, @Baja, @MotivoBaja, @FechaIngreso)"
                 };
-                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.VarChar).Value = empleado.IdEmpleado;
+
                 cmd.Parameters.Add("@Nombre", MySqlDbType.VarChar).Value = empleado.Nombre;
                 cmd.Parameters.Add("@Apellido", MySqlDbType.VarChar).Value = empleado.Apellido;
                 cmd.Parameters.Add("@Categoria", MySqlDbType.VarChar).Value = empleado.Categoria;
@@ -107,24 +229,23 @@ namespace wsArqApp
                 cmd.Parameters.Add("@MotivoBaja", MySqlDbType.VarChar).Value = empleado.MotivoBaja;
                 cmd.Parameters.Add("@FechaIngreso", MySqlDbType.VarChar).Value = empleado.FechaIngreso;
 
-                //cmd.ExecuteNonQuery();
-
                 MySqlDataReader reader = cmd.ExecuteReader();
 
                 if (reader.RecordsAffected > 0)
-                    result = true;
-                else
-                    result = false;
-
+                {
+                    var insert = ConsultarEmpleadoxId();
+                    respuesta.Empleado = insert.Empleado;
+                    respuesta.Respuesta = insert.Respuesta;
+                }
                 CerrarConexion();
-                return result;
             }
             catch (Exception ex)
             {
+                respuesta.Respuesta.CodRechazo = 99;
+                respuesta.Respuesta.MsgRechazo = "GuardarEmpleado " + ex.Message;
                 CerrarConexion();
-                return false;
-                throw ex;
             }
+            return respuesta;
         }
 
         #endregion
@@ -171,7 +292,7 @@ namespace wsArqApp
                 {
                     var historialAsistencia = new EmpleadoAsistencia
                     {
-                        IdEmpleado = reader.GetString(0),
+                        IdEmpleado = reader.GetInt32(0),
                         Nombre = reader.GetString(1),
                         Apellido = reader.GetString(2),
                         Categoria = reader.GetString(3),
@@ -245,7 +366,7 @@ namespace wsArqApp
                 {
                     var historialAsistencia = new EmpleadoAsistencia
                     {
-                        IdEmpleado = reader.GetString(0),
+                        IdEmpleado = reader.GetInt32(0),
                         Nombre = reader.GetString(1),
                         Apellido = reader.GetString(2),
                         Categoria = reader.GetString(3),
@@ -284,7 +405,7 @@ namespace wsArqApp
         #region HistorialAsistencia
 
         [WebMethod]
-        public HistorialAsistencia ConsultarAsistenciaxIdEmpleado(int noSemana, string idEmpleado)
+        public HistorialAsistencia ConsultarAsistenciaxIdEmpleado(int noSemana, int idEmpleado)
         {
             try
             {
@@ -302,9 +423,9 @@ namespace wsArqApp
                                 "      ,SemanaCompleta " +
                                 "      ,FechaInicio " +
                                 "      ,FechaFinal " +
-                                "FROM HistorialAsistencia " +
-                                "WHERE NoSemana = " + noSemana + " " +
-                                "AND IdEmpleado = '" + idEmpleado + "'";
+                                "FROM   HistorialAsistencia " +
+                                "WHERE  NoSemana = " + noSemana + " " +
+                                "AND    IdEmpleado = " + idEmpleado;
 
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
@@ -315,7 +436,7 @@ namespace wsArqApp
                     historialAsistencia = new HistorialAsistencia
                     {
                         Id = reader.GetInt32(0),
-                        IdEmpleado = reader.GetString(1),
+                        IdEmpleado = reader.GetInt32(1),
                         NoSemana = reader.GetInt32(2),
                         Lun = reader.GetBoolean(3),
                         Mar = reader.GetBoolean(4),
@@ -358,7 +479,7 @@ namespace wsArqApp
                     var historialAsistencia = new HistorialAsistencia
                     {
                         Id = reader.GetInt32(0),
-                        IdEmpleado = reader.GetString(1),
+                        IdEmpleado = reader.GetInt32(1),
                         NoSemana = reader.GetInt32(2),
                         Lun = reader.GetBoolean(3),
                         Mar = reader.GetBoolean(4),
@@ -400,7 +521,7 @@ namespace wsArqApp
                                     "VALUES (@IdEmpleado, @NoSemana, @Lun, @Mar, @Mie, " +
                                     "@Jue, @Vie, @Sab, @SemanaCompleta, @FechaInicio, @FechaFinal)"
                 };
-                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.VarChar).Value = asistencia.IdEmpleado;
+                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.Int32).Value = asistencia.IdEmpleado;
                 cmd.Parameters.Add("@NoSemana", MySqlDbType.Int32).Value = asistencia.NoSemana;
                 cmd.Parameters.Add("@Lun", MySqlDbType.Int32).Value = asistencia.Lun;
                 cmd.Parameters.Add("@Mar", MySqlDbType.Int32).Value = asistencia.Mar;
@@ -450,7 +571,7 @@ namespace wsArqApp
                                     "AND    NoSemana = @NoSemana "
                 };
 
-                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.VarChar).Value = asistencia.IdEmpleado;
+                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.Int32).Value = asistencia.IdEmpleado;
                 cmd.Parameters.Add("@NoSemana", MySqlDbType.Int32).Value = asistencia.NoSemana;
                 cmd.Parameters.Add("@Lun", MySqlDbType.Int32).Value = asistencia.Lun;
                 cmd.Parameters.Add("@Mar", MySqlDbType.Int32).Value = asistencia.Mar;
@@ -504,7 +625,7 @@ namespace wsArqApp
                                         "@Jue, @Vie, @Sab, @SemanaCompleta, @FechaInicio, @FechaFinal)"
                     };
 
-                    cmd.Parameters.Add("@IdEmpleado", MySqlDbType.VarChar).Value = asistencia.IdEmpleado;
+                    cmd.Parameters.Add("@IdEmpleado", MySqlDbType.Int32).Value = asistencia.IdEmpleado;
                     cmd.Parameters.Add("@NoSemana", MySqlDbType.Int32).Value = asistencia.NoSemana;
                     cmd.Parameters.Add("@Lun", MySqlDbType.Int32).Value = asistencia.Lun;
                     cmd.Parameters.Add("@Mar", MySqlDbType.Int32).Value = asistencia.Mar;
@@ -538,9 +659,8 @@ namespace wsArqApp
         #endregion
 
         #region Imagen
-
         [WebMethod]
-        public List<Imagen> ConsultarImagenesEmpleado(string idEmpleado)
+        public List<Imagen> ConsultarImagenesTipo(int idEmpleado, int idTipoImagen)
         {
             try
             {
@@ -548,7 +668,7 @@ namespace wsArqApp
                 AbrirConexion();
                 string query = "SELECT Id, IdEmpleado, RutaImagen " +
                                 "FROM Imagen " +
-                                "WHERE IdEmpleado = '" + idEmpleado + "'";
+                                "WHERE IdEmpleado = " + idEmpleado + " AND IdTipoImagen = " + idTipoImagen;
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
                 List<Imagen> listaImagenes = new List<Imagen>();
@@ -557,7 +677,7 @@ namespace wsArqApp
                     var imagen = new Imagen
                     {
                         Id = reader.GetInt32(0),
-                        IdEmpleado = reader.GetString(1),
+                        IdEmpleado = reader.GetInt32(1),
                         RutaImagen = reader.GetString(2)
                     };
                     listaImagenes.Add(imagen);
@@ -573,7 +693,7 @@ namespace wsArqApp
         }
 
         [WebMethod]
-        public bool GuardarImagenEmpleado(Imagen imagen)
+        public bool GuardarImagen(Imagen imagen)
         {
             try
             {
@@ -585,11 +705,12 @@ namespace wsArqApp
                 {
                     Connection = SqlConnection,
                     CommandText = "INSERT INTO Imagen " +
-                                    "(IdEmpleado, RutaImagen) " +
-                                    "VALUES (@IdEmpleado, @RutaImagen)"
+                                    "(IdEmpleado, RutaImagen, IdTipoImagen) " +
+                                    "VALUES (@IdEmpleado, @RutaImagen, @IdTipoImagen)"
                 };
-                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.VarChar).Value = imagen.IdEmpleado;
+                cmd.Parameters.Add("@IdEmpleado", MySqlDbType.Int32).Value = imagen.IdEmpleado;
                 cmd.Parameters.Add("@RutaImagen", MySqlDbType.VarChar).Value = imagen.RutaImagen;
+                cmd.Parameters.Add("@IdTipoImagen", MySqlDbType.Int32).Value = imagen.IdTipoImagen;
 
                 MySqlDataReader reader = cmd.ExecuteReader();
 
@@ -885,6 +1006,7 @@ namespace wsArqApp
         [WebMethod]
         public Usuario ConsultarUsuario(string idUsuario, string contrasena)
         {
+            Usuario usuarioModel = new Usuario();
             try
             {
                 CrearConexionSql();
@@ -900,24 +1022,71 @@ namespace wsArqApp
                                 "AND Contrasena = '" + contrasena + "' ";
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
-                Usuario usuarioModel = new Usuario();
+
                 while (reader.Read())
                 {
                     usuarioModel.Id = reader.GetInt32(0);
                     usuarioModel.IdUsuario = reader.GetString(1);
-                    usuarioModel.NombreUsuario = reader.GetString(2);
-                    usuarioModel.Correo = reader.GetString(3);
-                    usuarioModel.Contrasena = reader.GetString(4);
+                    usuarioModel.Contrasena = reader.GetString(2);
+                    usuarioModel.NombreUsuario = reader.GetString(3);
+                    usuarioModel.Correo = reader.GetString(4);
                     usuarioModel.Login = Convert.ToBoolean(reader.GetInt32(5));
                 }
                 CerrarConexion();
-                return usuarioModel;
+                usuarioModel.Exception = "";
             }
             catch (Exception ex)
             {
                 CerrarConexion();
-                throw ex;
+                usuarioModel.Exception = ex.Message;
             }
+            return usuarioModel;
+        }
+
+        [WebMethod]
+        public RespuestaIniciarSesion IniciarSesion(string idUsuario, string contrasena)
+        {
+            var respuesta = new RespuestaIniciarSesion
+            {
+                Respuesta = new RespuestaBase(),
+                Usuario = new Usuario()
+            };
+            try
+            {
+                CrearConexionSql();
+                AbrirConexion();
+                string query = "SELECT Id, " +
+                                "IdUsuario, " +
+                                "Contrasena, " +
+                                "NombreUsuario, " +
+                                "Correo, " +
+                                "Login " +
+                                "FROM Usuario " +
+                                "WHERE IdUsuario = '" + idUsuario + "' " +
+                                "AND Contrasena = '" + contrasena + "' ";
+                MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    respuesta.Usuario.Id = reader.GetInt32(0);
+                    respuesta.Usuario.IdUsuario = reader.GetString(1);
+                    respuesta.Usuario.Contrasena = "";// reader.GetString(2);
+                    respuesta.Usuario.NombreUsuario = reader.GetString(3);
+                    respuesta.Usuario.Correo = reader.GetString(4);
+                    respuesta.Usuario.Login = Convert.ToBoolean(reader.GetInt32(5));
+                }
+                CerrarConexion();
+                respuesta.Respuesta.CodRechazo = 0;
+                respuesta.Respuesta.MsgRechazo = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                CerrarConexion();
+                respuesta.Respuesta.CodRechazo = 99;
+                respuesta.Respuesta.MsgRechazo = ex.Message;
+            }
+            return respuesta;
         }
 
         [WebMethod]
@@ -927,11 +1096,11 @@ namespace wsArqApp
             {
                 CrearConexionSql();
                 AbrirConexion();
-                string query = "SELECT Id " +
+                string query = "SELECT Id, " +
                                 "IdUsuario, " +
-                                "Contrasena, " +
                                 "NombreUsuario, " +
                                 "Correo," +
+                                "Contrasena, " +
                                 "Login " +
                                 "FROM Usuario " +
                                 "WHERE IdUsuario = '" + idUsuario + "' ";
