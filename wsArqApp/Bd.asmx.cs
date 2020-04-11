@@ -96,7 +96,11 @@ namespace wsArqApp
         [WebMethod]
         public RespuestaConsultarEmpleados ConsultarListaEmpleados()
         {
-            var respuesta = new RespuestaConsultarEmpleados();
+            var respuesta = new RespuestaConsultarEmpleados()
+            {
+                Respuesta = new RespuestaBase(),
+                ListaEmpleados = new List<Empleado>()
+            };
             try
             {
                 CrearConexionSql();
@@ -113,7 +117,7 @@ namespace wsArqApp
                                 "FROM Empleado ";
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
-                List<Empleado> listaEmpleados = new List<Empleado>();
+                var listaEmpleados = new List<Empleado>();
 
                 while (reader.Read())
                 {
@@ -133,14 +137,13 @@ namespace wsArqApp
                     listaEmpleados.Add(empleado);
                 }
                 respuesta.ListaEmpleados = listaEmpleados;
-                respuesta.CodRechazo = 0;
-                respuesta.MsgRechazo = string.Empty;
+                respuesta.Respuesta.CodRechazo = 0;
+                respuesta.Respuesta.MsgRechazo = string.Empty;
             }
             catch (Exception ex)
             {
-                respuesta.ListaEmpleados = null;
-                respuesta.CodRechazo = 99;
-                respuesta.MsgRechazo = ex.Message + "|" + ex.InnerException;
+                respuesta.Respuesta.CodRechazo = 99;
+                respuesta.Respuesta.MsgRechazo = ex.Message + "|" + ex.InnerException;
             }
             CerrarConexion();
             return respuesta;
@@ -149,7 +152,11 @@ namespace wsArqApp
         [WebMethod]
         public RespuestaGuardarEmpleado ConsultarEmpleadoxId()
         {
-            var respuesta = new RespuestaGuardarEmpleado();
+            var respuesta = new RespuestaGuardarEmpleado()
+            {
+                Respuesta = new RespuestaBase(),
+                Empleado = new Empleado()
+            };
             try
             {
                 string query = "SELECT IdEmpleado" +
@@ -165,7 +172,6 @@ namespace wsArqApp
                                 "WHERE IdEmpleado = (SELECT MAX(IdEmpleado) FROM Empleado)";
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
-                List<Empleado> listaEmpleados = new List<Empleado>();
 
                 while (reader.Read())
                 {
@@ -200,7 +206,7 @@ namespace wsArqApp
         [WebMethod]
         public RespuestaGuardarEmpleado GuardarEmpleado(Empleado empleado)
         {
-            var respuesta = new RespuestaGuardarEmpleado
+            var respuesta = new RespuestaGuardarEmpleado()
             {
                 Respuesta = new RespuestaBase(),
                 Empleado = new Empleado()
@@ -225,7 +231,7 @@ namespace wsArqApp
                 cmd.Parameters.Add("@Categoria", MySqlDbType.VarChar).Value = empleado.Categoria;
                 cmd.Parameters.Add("@Imss", MySqlDbType.VarChar).Value = empleado.Imss;
                 cmd.Parameters.Add("@SueldoSemanal", MySqlDbType.Decimal).Value = empleado.SueldoSemanal;
-                cmd.Parameters.Add("@Baja", MySqlDbType.VarChar).Value = empleado.Baja;
+                cmd.Parameters.Add("@Baja", MySqlDbType.Int32).Value = empleado.Baja;
                 cmd.Parameters.Add("@MotivoBaja", MySqlDbType.VarChar).Value = empleado.MotivoBaja;
                 cmd.Parameters.Add("@FechaIngreso", MySqlDbType.VarChar).Value = empleado.FechaIngreso;
 
@@ -233,16 +239,24 @@ namespace wsArqApp
 
                 if (reader.RecordsAffected > 0)
                 {
-                    var insert = ConsultarEmpleadoxId();
-                    respuesta.Empleado = insert.Empleado;
-                    respuesta.Respuesta = insert.Respuesta;
+                    //var insert = ConsultarEmpleadoxId();
+                    //respuesta.Empleado = insert.Empleado;
+                    //respuesta.Respuesta = insert.Respuesta;
+                    respuesta.Empleado = null;
+                    respuesta.Respuesta.CodRechazo = 0;
+                    respuesta.Respuesta.MsgRechazo = "";
+                }
+                else
+                {
+                    respuesta.Respuesta.CodRechazo = 98;
+                    respuesta.Respuesta.MsgRechazo = "No se insertó";
                 }
                 CerrarConexion();
             }
             catch (Exception ex)
             {
                 respuesta.Respuesta.CodRechazo = 99;
-                respuesta.Respuesta.MsgRechazo = "GuardarEmpleado " + ex.Message;
+                respuesta.Respuesta.MsgRechazo = "GuardarEmpleado " + ex.Message + "|" + ex.InnerException;
                 CerrarConexion();
             }
             return respuesta;
@@ -355,7 +369,8 @@ namespace wsArqApp
                                 "FROM Empleado e" +
                                 "	LEFT JOIN HistorialAsistencia a" +
                                 "		ON e.IdEmpleado = a.IdEmpleado " +
-                                "WHERE	a.NoSemana = " + noSemana;
+                                "WHERE	a.NoSemana = " + noSemana + " " +
+                                "ORDER BY e.IdEmpleado ";
 
                 MySqlCommand cmd = new MySqlCommand(query, SqlConnection);
                 MySqlDataReader reader = cmd.ExecuteReader();
@@ -711,6 +726,8 @@ namespace wsArqApp
                 cmd.Parameters.Add("@IdEmpleado", MySqlDbType.Int32).Value = imagen.IdEmpleado;
                 cmd.Parameters.Add("@RutaImagen", MySqlDbType.VarChar).Value = imagen.RutaImagen;
                 cmd.Parameters.Add("@IdTipoImagen", MySqlDbType.Int32).Value = imagen.IdTipoImagen;
+                cmd.Parameters.Add("@ImagenByte", MySqlDbType.MediumBlob).Value = imagen.ImagenBytes;
+                cmd.Parameters.Add("@NombreImagen", MySqlDbType.VarChar).Value = imagen.NombreImagen;
 
                 MySqlDataReader reader = cmd.ExecuteReader();
 
